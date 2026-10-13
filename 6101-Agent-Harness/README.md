@@ -1,8 +1,9 @@
+
 # 6101 Agent Harnesses
 
 Safety gate for LLM agents using the AgentDojo framework. The system intercepts tool calls and applies policies to approve, deny, or escalate requests based on tool risk metadata.
 
-This project also includes **R5 evaluation, cost tracking, and analysis utilities** for studying the trade-offs between task completion, security, human review workload, and model usage cost.
+This project also includes **R5 evaluation, cost tracking, and analysis utilities** to study the trade-offs between task completion, security, human review workload, and model usage cost.
 
 ## Features
 
@@ -81,7 +82,7 @@ Keep the Ollama service running in a separate terminal when using the local mode
 
 ### Running Tests
 
-Run the existing test suite from the repository root:
+Run the test suite from the repository root:
 
 ```bash
 python -m pytest tests/ -v
@@ -235,7 +236,7 @@ The `calculate_metrics()` function processes episode records, gate decision reco
 
 The current metric design includes:
 
-**Task Completion Rate at Budget \(k\) (TCR@k)**
+**Task Completion Rate at Budget k (TCR@k)**
 
 Measures the proportion of tasks completed safely under a given escalation budget.
 
@@ -281,7 +282,7 @@ Unknown cost records are reported separately so that incomplete usage informatio
 
 File: `src/experiment_runner.py`
 
-The current `Experiment Runner` generates a CSV experiment manifest using the AgentDojo task suite, policy labels, and escalation-budget values.
+The current Experiment Runner generates a CSV experiment manifest using the AgentDojo task suite, policy labels, and escalation-budget values.
 
 Default configuration:
 
@@ -306,9 +307,7 @@ python -m src.experiment_runner
 
 Output:
 
-```text
-runs/r5_experiment_plan.csv
-```
+`runs/r5_experiment_plan.csv`
 
 The CSV contains the benchmark version, suite, user-task ID, injection-task ID, policy label, escalation budget, status, and error field.
 
@@ -324,7 +323,7 @@ The planned evaluation compares three policy configurations:
 | Full-escalate | Human-review-oriented baseline |
 | Risk-based | Risk-aware approval policy |
 
-The experiment varies the escalation budget \(k\) across `0`, `1`, `3`, and `5`.
+The experiment varies the escalation budget `k` across `0`, `1`, `3`, and `5`.
 
 The main analysis goals are to:
 
