@@ -1,13 +1,13 @@
 
 # 6101 Agent Harnesses
 
-Safety gate for LLM agents using the AgentDojo framework. The system intercepts tool calls and applies policies to approve, deny, or escalate requests based on tool risk metadata.
+A safety gate for LLM agents built with the AgentDojo framework. The system intercepts tool calls and applies a policy to approve, deny, or escalate requests based on tool risk metadata.
 
-This project also includes **R5 evaluation, cost tracking, and analysis utilities** to study the trade-offs between task completion, security, human review workload, and model usage cost.
+This project also includes evaluation, cost tracking, and analysis utilities to study the trade-offs between task completion, security, human review workload, and model usage cost.
 
 ## Features
 
-### R1 — Safety Gate and Risk-Based Policy
+### R1 - Safety Gate and Risk-Based Policy
 
 - Intercepts agent tool calls before execution.
 - Supports `AUTO_APPROVE`, `AUTO_DENY`, and `ESCALATE` decisions.
@@ -16,20 +16,20 @@ This project also includes **R5 evaluation, cost tracking, and analysis utilitie
 - Tracks and enforces a per-task escalation budget.
 - Provides a pipeline factory for integrating the safety gate with AgentDojo.
 
-### R5 — Evaluation, Cost, and Analysis
+### R5 - Evaluation, Cost, and Analysis
 
 - **Experiment Logger:** Records gate decisions and task-level results in JSONL format.
 - **Cost Tracker:** Records model calls, token usage, reported costs, and cost information by component.
-- **Metrics:** Calculates task completion and safety metrics, human-review workload, and cost summaries.
+- **Metrics:** Calculates task completion and safety metrics, human review workload, and cost summaries.
 - **Experiment Runner:** Generates experiment plans across benchmark tasks, policy configurations, and escalation budgets, and exports the plan to CSV.
 
-The R5 utilities provide the foundation for reproducible experiments. Full end-to-end integration with AgentDojo and completed benchmark runs remain work in progress.
+The R5 modules provide the foundation for reproducible experiments. Full integration with AgentDojo and completed benchmark runs remain work in progress.
 
 ## Setup
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.11 or newer
 - AgentDojo
 - Ollama for local LLM execution, or an OpenAI-compatible API
 - Git
@@ -56,9 +56,11 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Install Ollama from [https://ollama.com](https://ollama.com).
+Install Ollama from:
 
-Pull the model:
+https://ollama.com
+
+Download the model:
 
 ```bash
 ollama pull qwen3:14b
@@ -88,9 +90,9 @@ Run the test suite from the repository root:
 python -m pytest tests/ -v
 ```
 
-The expected number of passing tests should be confirmed against the current repository version. The original R1 README reported 23 tests; additional R5 tests and later changes may affect the total.
+The original R1 README reported 23 passing tests. The current test count may differ because additional tests and modules have been added. Run the command above to verify the current result.
 
-To run the main R1 gate and risk-policy tests:
+To run the main gate and risk-policy tests:
 
 ```bash
 python -m pytest tests/test_gate.py tests/test_gate_integration.py tests/test_risk_policy.py -q
@@ -98,7 +100,7 @@ python -m pytest tests/test_gate.py tests/test_gate_integration.py tests/test_ri
 
 ### Building a Pipeline
 
-Load tool risk metadata:
+Load the tool risk metadata:
 
 ```python
 from src.pipeline import build_pipeline
@@ -109,7 +111,7 @@ from openai import OpenAI
 md = load_tool_risk_metadata("src/tool_risk_metadata.yaml")
 ```
 
-Create a policy:
+Create the policy:
 
 ```python
 policy = RiskBasedPolicy(md)
@@ -142,9 +144,11 @@ Here, `my_reviewer` must be an implementation of the project's Reviewer interfac
 
 ### Running on AgentDojo
 
-Use the built pipeline with an AgentDojo task suite. Refer to the [AgentDojo documentation](https://agentdojo.spylab.ai/) for task execution and benchmark APIs.
+Use the pipeline with an AgentDojo task suite. Refer to the AgentDojo documentation for task execution and benchmark APIs:
 
-The evaluation should record task utility and security results separately.
+https://agentdojo.spylab.ai/
+
+Utility and security outcomes should be collected and evaluated separately.
 
 ## R1: Safety Gate
 
@@ -162,7 +166,7 @@ tools:
     default_decision: ESCALATE
 ```
 
-The risk-based policy currently follows these rules:
+The risk-based policy follows these rules:
 
 | Configuration | Decision |
 |---|---|
@@ -172,7 +176,7 @@ The risk-based policy currently follows these rules:
 | `risk: medium` | Escalate for review |
 | `risk: high` | Escalate for review |
 
-Explicit `default_decision` values take precedence over the risk-based default rules.
+An explicit `default_decision` takes precedence over the default risk-based rules.
 
 ### Escalation Budget
 
@@ -180,26 +184,43 @@ The `k` parameter in `build_pipeline` controls the available human-review budget
 
 - Each escalation that actually invokes the Reviewer consumes one budget unit.
 - When the budget is exhausted, further escalation requests are denied.
-- The budget is reset at the start of each task.
+- The budget resets at the start of each task.
 
-The budget limits the number of reviewer consultations and helps evaluate the trade-off between security and review workload.
+The budget limits reviewer consultations and helps evaluate the trade-off between security and review workload.
 
 ## R5: Evaluation, Cost, and Analysis
 
-R5 adds utilities for recording experiments and analyzing the performance of different safety policies.
+R5 provides utilities for recording experiment data, calculating evaluation metrics, tracking model usage costs, and preparing benchmark experiments.
 
 ### 1. Experiment Logger
 
 File: `src/experiment_logger.py`
 
-The `ExperimentLogger` writes structured records in JSONL format.
+The `ExperimentLogger` records structured events in JSONL format.
 
-It supports two types of records:
+It supports two types of records.
 
-- **Gate decisions:** policy, initial budget, task ID, tool name, decision, approval status, remaining budget, and rationale.
-- **Episode results:** task status, task completion, and whether an unauthorized tool call was observed.
+**Gate decision records**
 
-Each record includes a run ID and timestamp. Logs are appended to files rather than overwriting previous records.
+- Run ID and timestamp
+- Policy name
+- Initial escalation budget
+- Task ID
+- Tool name
+- Approval decision
+- Approval status
+- Remaining budget
+- Decision rationale
+
+**Episode result records**
+
+- Task ID
+- Task status
+- Whether the task was completed
+- Whether an unauthorized tool call was observed
+- Policy name and escalation budget
+
+The logger appends new records instead of overwriting previous records.
 
 Output files:
 
@@ -208,21 +229,32 @@ Output files:
 
 These logs are intended to support later metric calculation and experiment analysis.
 
+The logger has been implemented as a standalone module. Integration with the live Gate and AgentDojo execution flow remains to be completed.
+
 ### 2. Cost Tracker
 
 File: `src/cost_tracker.py`
 
 The `CostTracker` records model-call usage and cost information for three components:
 
-- `agent`
-- `policy`
-- `reviewer`
+- `agent`: agent model calls
+- `policy`: policy model calls, if applicable
+- `reviewer`: reviewer model calls, if applicable
 
-Supported fields include model name, provider, input tokens, output tokens, reported cost, call status, request ID, and usage source.
+Supported fields include:
 
-It also provides a summary of calls, token usage, known costs, and calls with unknown costs.
+- Model name
+- Provider
+- Input token count
+- Output token count
+- Reported cost
+- Call status
+- Request ID
+- Usage data source
 
-Unknown costs are tracked separately rather than silently treated as zero. Actual cost analysis depends on connecting the tracker to real model calls and collecting available usage information.
+The tracker can summarize call counts, token usage, known costs, and calls with unknown costs.
+
+Unknown costs are tracked separately rather than silently treated as zero. Actual cost analysis depends on connecting the tracker to real model calls and collecting the available usage information.
 
 Output file:
 
@@ -234,49 +266,50 @@ File: `src/metrics.py`
 
 The `calculate_metrics()` function processes episode records, gate decision records, and optional cost records.
 
-The current metric design includes:
+#### Task Completion Rate at Budget k (TCR@k)
 
-**Task Completion Rate at Budget k (TCR@k)**
+TCR@k measures the proportion of evaluated tasks that are both successfully completed and safe under an escalation budget of `k`.
 
-Measures the proportion of tasks completed safely under a given escalation budget.
+A task is considered safely completed only when the task completion result and its safety outcome satisfy the project's evaluation criteria.
 
-\[
-\mathrm{TCR@k}
-=
-\frac{\text{Safely completed tasks}}
-{\text{Tasks with known safety labels}}
-\]
+Text representation of the formula:
 
-A task should not be counted as safely completed merely because it finished. Security labels must also be considered. Tasks with unknown safety labels should not automatically be treated as safe.
+TCR@k = Number of safely completed tasks / Number of evaluated tasks with known safety labels
 
-**Human-in-the-Loop Workload (HITL Load)**
+Tasks with unknown safety labels should not automatically be treated as safe. The denominator must follow the official project definition, and the same definition must be used for every policy and budget setting.
 
-Measures the human-review workload associated with successful tasks. The analysis can report total reviewer consultations and average consultations per successful task.
+#### Human-in-the-Loop Workload (HITL Load)
 
-\[
-\mathrm{HITL\ Load}
-=
-\frac{\text{Reviewer consultations on successful tasks}}
-{\text{Number of successful tasks}}
-\]
+HITL means Human-in-the-Loop. It refers to human involvement in reviewing agent tool calls.
 
-The exact counting convention should remain consistent across all compared policies.
+The evaluation can report two complementary measurements:
 
-**Cost Analysis**
+- Total reviewer consultations.
+- Average reviewer consultations per successful task.
 
-The cost summary separates known costs by component:
+Text representation of the average workload formula:
 
-\[
-C_{\mathrm{total}}
-=
-C_{\mathrm{agent}}
-+
-C_{\mathrm{policy}}
-+
-C_{\mathrm{reviewer}}
-\]
+HITL Load = Reviewer consultations associated with successful tasks / Number of successful tasks
 
-Unknown cost records are reported separately so that incomplete usage information does not distort the comparison.
+A reviewer consultation means an actual invocation of the Reviewer. An escalation request that is blocked because the review budget is exhausted should not be counted as an actual reviewer consultation.
+
+The counting convention must remain consistent across all policies and budget settings.
+
+#### Cost Analysis
+
+The cost analysis separates known model-call costs by component:
+
+- Agent cost
+- Policy cost
+- Reviewer cost
+
+Text representation of the total known cost:
+
+Total known cost = Agent cost + Policy cost + Reviewer cost
+
+Calls with unknown costs should be reported separately. They should not be silently treated as zero-cost calls.
+
+**Implementation note:** These are the intended metric definitions. They must be checked against the course project specification and the actual implementation in `src/metrics.py` before final results are reported.
 
 ### 4. Experiment Runner
 
@@ -284,7 +317,7 @@ File: `src/experiment_runner.py`
 
 The current Experiment Runner generates a CSV experiment manifest using the AgentDojo task suite, policy labels, and escalation-budget values.
 
-Default configuration:
+The default configuration is:
 
 | Parameter | Value |
 |---|---|
@@ -295,9 +328,7 @@ Default configuration:
 
 The current configuration generates 1,728 planned combinations:
 
-\[
-16 \times 9 \times 3 \times 4 = 1728
-\]
+16 user tasks x 9 injection tasks x 3 policy labels x 4 budget values = 1,728 combinations.
 
 Generate the experiment plan from the repository root:
 
@@ -305,13 +336,13 @@ Generate the experiment plan from the repository root:
 python -m src.experiment_runner
 ```
 
-Output:
+Output file:
 
 `runs/r5_experiment_plan.csv`
 
-The CSV contains the benchmark version, suite, user-task ID, injection-task ID, policy label, escalation budget, status, and error field.
+The CSV contains the benchmark version, suite, user task ID, injection task ID, policy label, escalation budget, status, and error field.
 
-**Important:** The current runner creates an experiment plan only. It does not yet execute all benchmark tasks or establish completed experimental results. The policy labels in the plan must also be connected to the corresponding implementations before running the final evaluation.
+**Important:** The current runner generates an experiment plan only. It does not execute all benchmark tasks or establish completed experimental results. The policy labels in the plan must be connected to the corresponding policy implementations before the final evaluation.
 
 ## Experiment Design
 
@@ -319,11 +350,11 @@ The planned evaluation compares three policy configurations:
 
 | Policy | Purpose |
 |---|---|
-| Full-approve | Permissive baseline |
-| Full-escalate | Human-review-oriented baseline |
-| Risk-based | Risk-aware approval policy |
+| `full_approve` | Permissive approval baseline |
+| `full_escalate` | Human-review-oriented baseline |
+| `risk_based` | Risk-aware approval policy |
 
-The experiment varies the escalation budget `k` across `0`, `1`, `3`, and `5`.
+The experiment varies the escalation budget across `0`, `1`, `3`, and `5`.
 
 The main analysis goals are to:
 
@@ -331,7 +362,7 @@ The main analysis goals are to:
 2. Measure the effect of review budget on task completion and security.
 3. Quantify human-review workload.
 4. Compare agent, policy, and reviewer costs.
-5. Examine the trade-off between restrictive approval and permissive approval.
+5. Examine the trade-off between restrictive and permissive approval.
 
 AgentDojo utility and security outcomes should be collected and analyzed separately. Final conclusions should be based on actual benchmark runs rather than the experiment manifest alone.
 
@@ -358,8 +389,8 @@ AgentDojo utility and security outcomes should be collected and analyzed separat
 │   └── r5_experiment_plan.csv    # Generated experiment manifest
 ├── configs/                      # Experiment configurations
 ├── requirements.txt
-├── conftest.py
-└── README.md
+├── README.md
+└── conftest.py
 ```
 
 The file list reflects the current development structure and may change as the project evolves.
@@ -371,8 +402,8 @@ The file list reflects the current development structure and may change as the p
 | R1 safety gate | Basic implementation available |
 | R1 risk-based policy | Basic implementation available |
 | R1 escalation budget | Basic implementation available |
-| R5 experiment logger | Basic implementation available; integration pending |
-| R5 cost tracker | Basic implementation available; real-call integration pending |
+| R5 experiment logger | Standalone module implemented; integration pending |
+| R5 cost tracker | Standalone module implemented; real-call integration pending |
 | R5 metrics | Basic implementation available; validation with benchmark results pending |
 | R5 experiment runner | Experiment manifest generation implemented |
 | End-to-end AgentDojo execution | Pending |
@@ -380,11 +411,11 @@ The file list reflects the current development structure and may change as the p
 | Final result tables and plots | Pending |
 | Full comparative analysis | Pending |
 
-Some module-level tests have been run during development. Their results do not imply that the complete R5 evaluation pipeline or all benchmark experiments have passed.
+Some module-level tests have been run during development. These results do not imply that the complete R5 evaluation pipeline or all benchmark experiments have passed.
 
 ## Changelog
 
-### v0.2.0 — October 2026
+### v0.2.0 - October 2026
 
 - Added the initial safety gate implementation.
 - Added `RiskBasedPolicy` with YAML-based tool risk metadata.
@@ -394,7 +425,7 @@ Some module-level tests have been run during development. Their results do not i
 - Added evaluation metric calculation utilities.
 - Added experiment manifest generation and CSV export.
 
-The original R1 changelog reported 23 passing unit tests. Confirm the current total by running the test suite against the latest repository version.
+The original R1 changelog reported 23 passing unit tests. Confirm the current test count by running the test suite against the latest repository version.
 
 ## Future Work
 
